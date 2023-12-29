@@ -12,12 +12,12 @@
 $dryRun = 0
 
 # Specify folder path that will contain your resulting Notes structure - Default: c:\temp\notes
-$notesdestpath = 'c:\temp\notes'
+$notesdestpath = "c:\temp\notes"
 
 # Specify a notebook name to convert
 # '': Convert all notebooks - Default
 # 'mynotebook': Convert specific notebook named 'mynotebook'
-$targetNotebook = ''
+$targetNotebook = ""
 
 # Whether to create new word .docx or reuse existing ones
 # 1: Always create new .docx files - Default
@@ -27,7 +27,7 @@ $usedocx = 1
 # Whether to discard word .docx after conversion
 # 1: Discard intermediate .docx files - Default
 # 2: Keep .docx files
-$keepdocx = 1
+$keepdocx = 2
 
 # Whether to use name .docx files using page ID with last modified date epoch, or hierarchy
 # 1: Use page ID with last modified date epoch (recommended if you chose to use existing .docx files) - Default
@@ -42,12 +42,12 @@ $prefixFolders = 1
 # Specify a value between 32 and 255 as the maximum length of markdown file names, and their folder names (only when using subfolders for subpages (e.g. Page\Subpage.md)). File and folder names with length exceeding this value will be truncated accordingly.
 # NOTE: If you are using prefixes for subpages (e.g. Page_Subpage.md), it is recommended to set this to at 100 or more.
 # Default: 32
-$mdFileNameAndFolderNameMaxLength = 32
+$mdFileNameAndFolderNameMaxLength = 255
 
 # Whether to store media in single or multiple folders
 # 1: Images stored in single 'media' folder at Notebook-level - Default
 # 2: Separate 'media' folder for each folder in the hierarchy
-$medialocation = 1
+$medialocation = 2
 
 # Specify Pandoc output format and optional extension(s) in the format: <markdownformat><+extension><-extension>
 # Use this to customize the markdown flavor
@@ -61,7 +61,18 @@ $medialocation = 1
 #   markdown_strict+simple_tables-multiline_tables-grid_tables+pipe_tables
 # Default:
 #   markdown-simple_tables-multiline_tables-grid_tables+pipe_tables
-$conversion = 'markdown-simple_tables-multiline_tables-grid_tables+pipe_tables'
+$conversion = 'gfm+pipe_tables-raw_html'
+
+# Whether to wrap OneNote code style text in backticks
+# Requires Python 3 and python-docx to be installed
+# 1: Wrap code style text in backticks - Default
+# 2: Do not wrap code style text 
+$wrapCodeBlocks = 1
+
+# Whether to include the title of the note at the top of the document
+# 1: Include - Default
+# 2: Don't include
+$headerEnabled = 1
 
 # Whether to include page timestamp and separator at top of document
 # 1: Include - Default
@@ -76,7 +87,8 @@ $keepspaces = 1
 # Whether to clear escape symbols from md files. See: https://pandoc.org/MANUAL.html#backslash-escapes
 # 1: Clear all '\' characters  - Default
 # 2: Clear all '\' characters except those preceding alphanumeric characters
-# 3: Keep '\' symbol escape
+# 3: Clear all '\' characters except those preceding opening or closing angle brackets
+# 4: Keep '\' symbol escape
 $keepescape = 1
 
 # Whether to use Line Feed (LF) or Carriage Return + Line Feed (CRLF) for new lines

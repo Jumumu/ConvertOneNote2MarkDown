@@ -27,6 +27,10 @@ Function Validate-Dependencies {
     if (! (Get-Command -Name 'pandoc.exe' -ErrorAction SilentlyContinue) ) {
         throw "Could not locate pandoc.exe. Please ensure pandoc is installed for all users, and available in PATH. If pandoc was just installed using .msi or chocolatey, you may need to restart Powershell or the computer for pandoc to be set correctly in PATH."
     }
+
+    if (! (Get-Command -Name 'python.exe' -ErrorAction SilentlyContinue) ) {
+        "Could not locate python.exe. If you would like to wrap code blocks, please ensure python is installed for all users, and available in PATH. If Python was just installed, you may need to restart Powershell for python to be set correctly in PATH." | Write-Warning
+    }
 }
 
 Function Get-DefaultConfiguration {
@@ -140,6 +144,27 @@ Default:
             default = 'markdown-simple_tables-multiline_tables-grid_tables+pipe_tables'
             value = 'markdown-simple_tables-multiline_tables-grid_tables+pipe_tables'
         }
+        wrapCodeBlocks = @{
+            description = @'
+Whether to wrap OneNote code style text in backticks
+Requires Python 3 and python-docx to be installed
+1: Wrap code style text in backticks - Default
+2: Do not wrap code style text 
+'@
+            default = 1
+            value = 1
+            validateRange = 1,2
+        }
+        headerEnabled = @{
+            description = @'
+Whether to include the title of the note at the top of the document
+1: Include - Default
+2: Don't include
+'@
+            default = 1
+            value = 1
+            validateRange = 1,2
+        }
         headerTimestampEnabled = @{
             description = @'
 Whether to include page timestamp and separator at top of document
@@ -165,7 +190,8 @@ Whether to clear extra newlines between unordered (bullet) and ordered (numbered
 Whether to clear escape symbols from md files. See: https://pandoc.org/MANUAL.html#backslash-escapes
 1: Clear all '\' characters  - Default
 2: Clear all '\' characters except those preceding alphanumeric characters
-3: Keep '\' symbol escape
+3: Clear all '\' characters except those preceding opening or closing angle brackets
+4: Keep '\' symbol escape
 '@
             default = 1
             value = 1
@@ -918,10 +944,13 @@ Function New-SectionGroupConversionConfig {
                                     @{
                                         searchRegex = '^\s*'
                                         replacement = & {
-                                            $heading = "# $( $pageCfg['object'].name )"
+                                            $heading = ""
+                                            if ($config['headerEnabled']['value'] -eq 1) {
+                                                $heading += "# $( $pageCfg['object'].name )`n`n"
+                                            }
                                             if ($config['headerTimestampEnabled']['value'] -eq 1) {
-                                                $heading += "`n`nCreated: $(  $pageCfg['dateTime'].ToString('yyyy-MM-dd HH:mm:ss zz00') )"
-                                                $heading += "`n`nModified: $(  $pageCfg['lastModifiedTime'].ToString('yyyy-MM-dd HH:mm:ss zz00') )"
+                                                $heading += "Created: $(  $pageCfg['dateTime'].ToString('yyyy-MM-dd HH:mm:ss zz00') )"
+                                                $heading += "`nModified: $(  $pageCfg['lastModifiedTime'].ToString('yyyy-MM-dd HH:mm:ss zz00') )"
                                                 $heading += "`n`n---`n`n"
                                             }
                                             $heading
@@ -973,6 +1002,17 @@ Function New-SectionGroupConversionConfig {
                                     replacements = @(
                                         @{
                                             searchRegex = '\\([^A-Za-z0-9])'
+                                            replacement = '$1'
+                                        }
+                                    )
+                                }
+                            }
+                            elseif ($config['keepescape']['value'] -eq 3) {
+                                @{
+                                    description = "Clear all '\' characters except those preceding opening or closing angle brackets"
+                                    replacements = @(
+                                        @{
+                                            searchRegex = '\\([^<>])'
                                             replacement = '$1'
                                         }
                                     )
@@ -1158,6 +1198,32 @@ Function Convert-OneNotePage {
                     }
                 }else {
                     "Existing pdf file: $( $pageCfg['pdfExportFilePath'] )" | Write-Host -ForegroundColor Green
+                }
+            }
+
+            # Add code blocks to docx file
+            if ($config['wrapCodeBlocks']['value'] -eq 1) {
+                $stderrFile = "$( $pageCfg['tmpPath'] )/wrap-code-blocks-stderr.txt"
+                try {
+                    $argumentList = @(
+                        '.\wrap_code_blocks.py'
+                        if ($pageCfg['docxExportFilePath'] -match ' ') {
+                            "`"$( $pageCfg['docxExportFilePath'] )`"" # Add double-quotes to path containing spaces
+                        }else {
+                            $pageCfg['docxExportFilePath']
+                        }
+                    )
+                    $process = Start-Process -ErrorAction Stop -RedirectStandardError $stderrFile -PassThru -NoNewWindow -Wait -FilePath python.exe -ArgumentList $argumentList
+                    if ($process.ExitCode -ne 0) {
+                        $stderr = Get-Content $stderrFile -Raw
+                        throw "wrap_code_blocks.py error: $stderr"
+                    }
+                }catch {
+                    Write-Warning "Failed to wrap code blocks in docx file $( $pageCfg['docxExportFilePath'] )"
+                }finally {
+                    if (Test-Path $stderrFile) {
+                        Remove-Item $stderrFile -Force
+                    }
                 }
             }
 
