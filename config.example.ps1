@@ -66,7 +66,7 @@ $conversion = 'gfm+pipe_tables-raw_html'
 # Whether to wrap OneNote code style text in backticks
 # Requires Python 3 and python-docx to be installed
 # 1: Wrap code style text in backticks - Default
-# 2: Do not wrap code style text 
+# 2: Do not wrap code style text
 $wrapCodeBlocks = 1
 
 # Whether to include the title of the note at the top of the document
@@ -89,7 +89,7 @@ $keepspaces = 1
 # 2: Clear all '\' characters except those preceding alphanumeric characters
 # 3: Clear all '\' characters except those preceding opening or closing angle brackets
 # 4: Keep '\' symbol escape
-$keepescape = 1
+$keepescape = 3
 
 # Whether to use Line Feed (LF) or Carriage Return + Line Feed (CRLF) for new lines
 # 1: LF (unix) - Default

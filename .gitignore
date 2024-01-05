@@ -7,3 +7,4 @@ config.ps1
 venv
 *.docx
 output
+__pycache__

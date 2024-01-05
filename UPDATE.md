@@ -104,6 +104,33 @@ generated notes have been copied off of the Windows system.
 1. Review and commit changes
 1. Continue running `prettier` and committing the changes until there is no more
    diff
+1. Run Python script to remove erroneous backslashes in code blocks. Replace
+   `/path/to/output` with the path to the generated Markdown files:
+   ```bash
+   python ./fix_code_block_backslashes.py /path/to/output
+   ```
+1. Review Git diff and commit changes
+1. (Optional) Run Python script to detect code block languages and append the
+   language to the beginning of the code block for syntax highlighting (does not
+   append if a language has already been specified). The accuracy of the
+   language detection will highly depend on the code block. Incorrect detections
+   are much more likely for small code blocks where the language shares similar
+   features with other languages. **You should anticipate incorrect detections
+   for some code blocks when running this**. This step requires:
+   * Python 3.9 (v3.7 and v3.8 should also work, but versions newer than v3.9
+     will not due to the Tensorflow requirement)
+   * [guesslang](https://guesslang.readthedocs.io/en/latest/)
+   ```bash
+   pip install guesslang
+   ```
+
+   With the required dependencies installed, you can run the script with the
+   following command (replace `/path/to/output` with the path to the generated
+   Markdown files):
+   ```bash
+   python ./add_code_block_language.py /path/to/output
+   ```
+1. Review Git diff and commit changes
 1. Open Obsidian and point it to the output folder
 1. Assuming the notes were generated with `$headerEnabled = 1`, disable
    `Settings -> Appearance -> Show inline title` in Obsidian to prevent a
@@ -111,7 +138,32 @@ generated notes have been copied off of the Windows system.
 
 ## Known Issues
 
-1. In editing mode, the Obsidian Markdown rendering will break if the following
+1. If code style text is indented with only tabs in OneNote, the Markdown code
+   block will lose all indentation. For example, if there is a note with the
+   following code block (where `x = 5` is indented with a tab character):
+   ```
+   def main():
+      x = 5
+   ```
+   it will be converted to:
+   ```
+   def main():
+   x = 5
+   ```
+   When OneNote is used to export the note to a Word document, it removes the
+   tab characters. There is currently no way to prevent this besides replacing
+   the tabs with spaces in the note. Spaces will be correctly indented in the
+   Markdown file during the conversion process.
+1. This is not technically an issue, but any code blocks lacking code style
+   formatting in OneNote will not be wrapped with backticks since the script has
+   no way of magically knowing what is code and what is normal text.
+
+## Solved Issues
+
+1. The following issue was solved by adding the `fix_code_block_backslashes.py`
+   script. The below description is left below for archiving purposes.
+
+   In editing mode, the Obsidian Markdown rendering will break if the following
    conditions are true:
       1. There is a pair of opening/closing angle brackets outside of a code
          block (`<>`)
@@ -201,22 +253,3 @@ generated notes have been copied off of the Windows system.
    VS Code and fix any text that matches the condition described above. It will
    also be visually obvious if a note matches this condition because the
    Obsidian Markdown rendering will break.
-1. If code style text is indented with only tabs in OneNote, the Markdown code
-   block will lose all indentation. For example, if there is a note with the
-   following code block (where `x = 5` is indented with a tab character):
-   ```
-   def main():
-      x = 5
-   ```
-   it will be converted to:
-   ```
-   def main():
-   x = 5
-   ```
-   When OneNote is used to export the note to a Word document, it removes the
-   tab characters. There is currently no way to prevent this besides replacing
-   the tabs with spaces in the note. Spaces will be correctly indented in the
-   Markdown file during the conversion process.
-1. This is not technically an issue, but any code blocks lacking code style
-   formatting in OneNote will not be wrapped with backticks since the script has
-   no way of magically knowing what is code and what is normal text.
